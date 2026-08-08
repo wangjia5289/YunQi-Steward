@@ -1,0 +1,63 @@
+name: Release Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 and Maven cache
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Verify toolchain and Docker
+        run: |
+          java -version
+          mvn -version
+          docker version
+
+      - name: Install XML report reader
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Run full release reactor
+        run: mvn --batch-mode --no-transfer-progress clean verify
+
+      - name: Require all Docker tests with zero skips
+        run: scripts/assert-docker-tests.sh
+
+      - name: Capture remaining container diagnostics
+        if: failure()
+        run: |
+          docker ps -a
+          for container in $(docker ps -aq); do
+            echo "===== docker logs: $container ====="
+            docker logs "$container" || true
+          done
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: error
+
+      - name: Clean Docker resources
+        if: always()
+        run: |
+          docker ps -aq | xargs -r docker rm -f
+          docker network prune -f
