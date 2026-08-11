@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   verify:
@@ -91,3 +92,36 @@ jobs:
         run: |
           docker ps -aq | xargs -r docker rm -f
           docker network prune -f
+
+  binary-compatibility:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PACKAGES_USERNAME: ${{ secrets.PACKAGES_USERNAME }}
+      PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 and GitHub Packages credentials
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: github
+          server-username: PACKAGES_USERNAME
+          server-password: PACKAGES_TOKEN
+
+      - name: Require package-read credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$PACKAGES_USERNAME" && -n "$PACKAGES_TOKEN" ]] || {
+            echo "PACKAGES_USERNAME and PACKAGES_TOKEN are required for the binary baseline" >&2
+            exit 1
+          }
+
+      - name: Run strict binary compatibility gate
+        run: mvn --batch-mode --no-transfer-progress -Pbaseline-compatibility clean verify
