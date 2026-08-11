@@ -87,11 +87,11 @@ class ElasticJobLite3BindingTest {
         return new ElasticJobLite3Configuration(
                 serverLists,
                 namespace,
-                10,
-                20,
-                1,
                 1_000,
-                1_000,
+                3_000,
+                3,
+                60_000,
+                15_000,
                 Optional.of("elasticjob:secret"));
     }
 }

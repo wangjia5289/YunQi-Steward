@@ -2,12 +2,14 @@ package yunqi.zhibei.steward.control.configuration.nacos.v3;
 
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.config.ConfigService;
+import com.alibaba.nacos.api.exception.NacosException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import yunqi.zhibei.steward.control.configuration.ConfigurationSourceStatus;
 
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +28,10 @@ class Nacos3ConfigurationSourceIntegrationTest {
         ConfigService service = NacosFactory.createConfigService(serverAddress);
         Nacos3ConfigurationSource<Settings> source = null;
         try {
-            assertThat(service.publishConfig(dataId, group, content(1, "initial-secret"))).isTrue();
+            await(() -> "UP".equals(service.getServerStatus()));
+            String initialContent = content(1, "initial-secret");
+            assertThat(service.publishConfig(dataId, group, initialContent)).isTrue();
+            await(() -> configIs(service, dataId, group, initialContent));
             Nacos3ConfigurationSource<Settings> opened = Nacos3ConfigurationSource.open(
                     service,
                     dataId,
@@ -56,7 +61,9 @@ class Nacos3ConfigurationSourceIntegrationTest {
                 source.close();
             }
             try {
-                service.removeConfig(dataId, group);
+                if ("UP".equals(service.getServerStatus())) {
+                    service.removeConfig(dataId, group);
+                }
             } finally {
                 service.shutDown();
             }
@@ -85,9 +92,9 @@ class Nacos3ConfigurationSourceIntegrationTest {
         long deadline = System.nanoTime() + TIMEOUT.toNanos();
         while (!condition.getAsBoolean()) {
             if (System.nanoTime() >= deadline) {
-                throw new AssertionError("Nacos source did not converge before " + TIMEOUT);
+                throw new AssertionError("Nacos integration state did not converge before " + TIMEOUT);
             }
-            Thread.onSpinWait();
+            LockSupport.parkNanos(Duration.ofMillis(10).toNanos());
         }
     }
 
@@ -97,6 +104,18 @@ class Nacos3ConfigurationSourceIntegrationTest {
         try {
             return source.snapshot().revision() == revision;
         } catch (IllegalStateException unavailable) {
+            return false;
+        }
+    }
+
+    private static boolean configIs(
+            ConfigService service,
+            String dataId,
+            String group,
+            String expectedContent) {
+        try {
+            return expectedContent.equals(service.getConfig(dataId, group, 1_000));
+        } catch (NacosException unavailable) {
             return false;
         }
     }
