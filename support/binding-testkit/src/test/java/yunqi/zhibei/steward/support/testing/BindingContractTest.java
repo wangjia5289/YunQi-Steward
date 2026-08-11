@@ -1,8 +1,8 @@
 package yunqi.zhibei.steward.support.testing;
 
-import yunqi.zhibei.steward.lifecycle.Health;
-import yunqi.zhibei.steward.lifecycle.ProbeScope;
-import yunqi.zhibei.steward.lifecycle.ResourceBinding;
+import yunqi.zhibei.steward.control.resource.Health;
+import yunqi.zhibei.steward.control.resource.ProbeScope;
+import yunqi.zhibei.steward.control.resource.ResourceBinding;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Member;

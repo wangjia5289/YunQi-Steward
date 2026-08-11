@@ -10,56 +10,62 @@
     <packaging>pom</packaging>
 
     <name>Yunqi Steward</name>
-    <description>Managed lifecycle and vendor-neutral observation for native middleware clients</description>
+    <description>Interaction, control, and telemetry planes for managed middleware clients</description>
 
     <modules>
-        <!-- Vendor-neutral core -->
-        <module>core/observation</module>
-        <module>core/lifecycle</module>
-        <module>core/refresh</module>
-        <module>core/restart</module>
+        <!-- Telemetry plane -->
+        <module>yunqi-steward-telemetry-plane/telemetry-core</module>
 
-        <!-- Optional external-system adapters -->
-        <module>adapters/configuration/nacos3</module>
-        <module>adapters/observability/micrometer</module>
-        <module>adapters/observability/jfr</module>
-        <module>adapters/observability/opentelemetry</module>
-        <module>adapters/observability/slf4j</module>
+        <!-- Control plane: configuration management and resource management -->
+        <module>yunqi-steward-control-plane/configuration-management/core</module>
+        <module>yunqi-steward-control-plane/configuration-management/file/properties</module>
+        <module>yunqi-steward-control-plane/resource-management/core</module>
+        <module>yunqi-steward-control-plane/resource-management/refresh</module>
+        <module>yunqi-steward-control-plane/resource-management/restart</module>
+        <module>yunqi-steward-control-plane/configuration-management/nacos/v3</module>
+
+        <!-- Telemetry management implementations -->
+        <module>yunqi-steward-telemetry-plane/metric-management/micrometer</module>
+        <module>yunqi-steward-telemetry-plane/profile-management/jfr</module>
+        <module>yunqi-steward-telemetry-plane/trace-management/opentelemetry</module>
+        <module>yunqi-steward-telemetry-plane/log-management/slf4j</module>
 
         <!-- Binding-author support -->
         <module>support/binding-testkit</module>
+        <module>support/configuration-source-testkit</module>
 
-        <!-- Native SDK bindings: middleware / driver / major line -->
-        <module>bindings/redis/jedis/v5</module>
-        <module>bindings/redis/jedis/v7</module>
-        <module>bindings/redis/lettuce/v6</module>
-        <module>bindings/redis/redisson/v4</module>
+        <!-- Interaction plane: middleware / client kind / library / major line -->
+        <module>yunqi-steward-interaction-plane/redis/library-client/jedis/v5</module>
+        <module>yunqi-steward-interaction-plane/redis/library-client/jedis/v7</module>
+        <module>yunqi-steward-interaction-plane/redis/library-client/lettuce/v6</module>
+        <module>yunqi-steward-interaction-plane/redis/library-client/redisson/v4</module>
+        <module>yunqi-steward-interaction-plane/redis/framework-client/spring-framework/v6/jedis/v7</module>
 
-        <module>bindings/mysql/connectorj/v9</module>
-        <module>bindings/mysql/mariadb/v3</module>
-        <module>bindings/postgresql/jdbc/v42</module>
-        <module>bindings/clickhouse/jdbc/v0</module>
-        <module>bindings/mongodb/sync/v5</module>
-        <module>bindings/neo4j/driver/v6</module>
+        <module>yunqi-steward-interaction-plane/mysql/library-client/connectorj/v9</module>
+        <module>yunqi-steward-interaction-plane/mysql/library-client/mariadb/v3</module>
+        <module>yunqi-steward-interaction-plane/postgresql/library-client/jdbc/v42</module>
+        <module>yunqi-steward-interaction-plane/clickhouse/library-client/jdbc/v0</module>
+        <module>yunqi-steward-interaction-plane/mongodb/library-client/sync/v5</module>
+        <module>yunqi-steward-interaction-plane/neo4j/library-client/driver/v6</module>
 
-        <module>bindings/elasticsearch/java/v9</module>
-        <module>bindings/milvus/sdk/v2</module>
-        <module>bindings/minio/java/v8</module>
+        <module>yunqi-steward-interaction-plane/elasticsearch/library-client/java/v9</module>
+        <module>yunqi-steward-interaction-plane/milvus/library-client/sdk/v2</module>
+        <module>yunqi-steward-interaction-plane/minio/library-client/java/v8</module>
 
-        <module>bindings/nacos/client/v3</module>
-        <module>bindings/etcd/jetcd/v0</module>
-        <module>bindings/zookeeper/curator/v5</module>
-        <module>bindings/consul/api/v1</module>
+        <module>yunqi-steward-interaction-plane/nacos/library-client/nacos-client/v3</module>
+        <module>yunqi-steward-interaction-plane/etcd/library-client/jetcd/v0</module>
+        <module>yunqi-steward-interaction-plane/zookeeper/library-client/curator/v5</module>
+        <module>yunqi-steward-interaction-plane/consul/library-client/api/v1</module>
 
-        <module>bindings/kafka/client/v3</module>
-        <module>bindings/pulsar/client/v3</module>
-        <module>bindings/rabbitmq/client/v5</module>
-        <module>bindings/rocketmq/client/v5</module>
+        <module>yunqi-steward-interaction-plane/kafka/library-client/kafka-clients/v3</module>
+        <module>yunqi-steward-interaction-plane/pulsar/library-client/pulsar-client/v3</module>
+        <module>yunqi-steward-interaction-plane/rabbitmq/library-client/amqp-client/v5</module>
+        <module>yunqi-steward-interaction-plane/rocketmq/library-client/rocketmq-client/v5</module>
 
-        <module>bindings/elasticjob/lite/v3</module>
-        <module>bindings/powerjob/worker/v5</module>
-        <module>bindings/xxljob/core/v2</module>
-        <module>bindings/seata/tm/v2</module>
+        <module>yunqi-steward-interaction-plane/elasticjob/library-client/lite/v3</module>
+        <module>yunqi-steward-interaction-plane/powerjob/library-client/worker/v5</module>
+        <module>yunqi-steward-interaction-plane/xxljob/library-client/core/v2</module>
+        <module>yunqi-steward-interaction-plane/seata/library-client/tm/v2</module>
 
         <!-- Non-published verification tools -->
         <module>examples/observation-e2e</module>
@@ -79,6 +85,7 @@
         <commons-codec.version>1.19.0</commons-codec.version>
         <jedis5.version>5.2.0</jedis5.version>
         <jedis7.version>7.0.0</jedis7.version>
+        <spring-framework.version>6.2.8</spring-framework.version>
         <lettuce6.version>6.8.2.RELEASE</lettuce6.version>
         <redisson4.version>4.3.1</redisson4.version>
         <hikari.version>6.3.0</hikari.version>
@@ -124,42 +131,52 @@
         <dependencies>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-observation</artifactId>
+                <artifactId>steward-telemetry-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-lifecycle</artifactId>
+                <artifactId>steward-control-configuration-management-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-refresh</artifactId>
+                <artifactId>steward-control-configuration-management-file-properties</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-restart</artifactId>
+                <artifactId>steward-control-resource-management-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-observability-micrometer</artifactId>
+                <artifactId>steward-control-resource-management-refresh</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-observability-jfr</artifactId>
+                <artifactId>steward-control-resource-management-restart</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-observability-opentelemetry</artifactId>
+                <artifactId>steward-telemetry-metric-management-micrometer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-observability-slf4j</artifactId>
+                <artifactId>steward-telemetry-profile-management-jfr</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>steward-telemetry-trace-management-opentelemetry</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>steward-telemetry-log-management-slf4j</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -169,7 +186,12 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>steward-configuration-nacos3</artifactId>
+                <artifactId>steward-configuration-source-testkit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>steward-control-configuration-management-nacos-v3</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

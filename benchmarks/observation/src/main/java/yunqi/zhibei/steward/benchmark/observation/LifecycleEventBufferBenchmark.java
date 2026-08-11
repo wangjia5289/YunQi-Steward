@@ -1,7 +1,7 @@
 package yunqi.zhibei.steward.benchmark.observation;
 
-import yunqi.zhibei.steward.observation.LifecycleEvent;
-import yunqi.zhibei.steward.observation.LifecycleEventBuffer;
+import yunqi.zhibei.steward.telemetry.LifecycleEvent;
+import yunqi.zhibei.steward.telemetry.LifecycleEventBuffer;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

@@ -1,12 +1,12 @@
 package yunqi.zhibei.steward.benchmark.observation;
 
-import yunqi.zhibei.steward.lifecycle.Health;
-import yunqi.zhibei.steward.lifecycle.ProbeScope;
-import yunqi.zhibei.steward.lifecycle.ResourceBinding;
-import yunqi.zhibei.steward.observation.LifecycleEventBuffer;
-import yunqi.zhibei.steward.refresh.ManagedResource;
-import yunqi.zhibei.steward.refresh.MutableConfigurationSource;
-import yunqi.zhibei.steward.refresh.ResourceOperation;
+import yunqi.zhibei.steward.control.resource.Health;
+import yunqi.zhibei.steward.control.resource.ProbeScope;
+import yunqi.zhibei.steward.control.resource.ResourceBinding;
+import yunqi.zhibei.steward.telemetry.LifecycleEventBuffer;
+import yunqi.zhibei.steward.control.resource.refresh.ManagedResource;
+import yunqi.zhibei.steward.control.configuration.MutableConfigurationSource;
+import yunqi.zhibei.steward.control.resource.refresh.ResourceOperation;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

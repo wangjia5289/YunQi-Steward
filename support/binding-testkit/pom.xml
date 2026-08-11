@@ -17,7 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-refresh</artifactId>
+            <artifactId>steward-control-configuration-management-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>steward-control-resource-management-refresh</artifactId>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

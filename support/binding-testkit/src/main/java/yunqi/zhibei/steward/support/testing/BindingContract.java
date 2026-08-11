@@ -1,14 +1,14 @@
 package yunqi.zhibei.steward.support.testing;
 
-import yunqi.zhibei.steward.lifecycle.BoundResource;
-import yunqi.zhibei.steward.lifecycle.Health;
-import yunqi.zhibei.steward.lifecycle.HealthCheck;
-import yunqi.zhibei.steward.lifecycle.ProbeScope;
-import yunqi.zhibei.steward.lifecycle.ResourceBinding;
-import yunqi.zhibei.steward.refresh.FailureSnapshot;
-import yunqi.zhibei.steward.refresh.ManagedResource;
-import yunqi.zhibei.steward.refresh.ManagedResourceStatus;
-import yunqi.zhibei.steward.refresh.MutableConfigurationSource;
+import yunqi.zhibei.steward.control.resource.BoundResource;
+import yunqi.zhibei.steward.control.resource.Health;
+import yunqi.zhibei.steward.control.resource.HealthCheck;
+import yunqi.zhibei.steward.control.resource.ProbeScope;
+import yunqi.zhibei.steward.control.resource.ResourceBinding;
+import yunqi.zhibei.steward.control.resource.refresh.FailureSnapshot;
+import yunqi.zhibei.steward.control.resource.refresh.ManagedResource;
+import yunqi.zhibei.steward.control.resource.refresh.ManagedResourceStatus;
+import yunqi.zhibei.steward.control.configuration.MutableConfigurationSource;
 
 import java.time.Duration;
 import java.util.ArrayList;

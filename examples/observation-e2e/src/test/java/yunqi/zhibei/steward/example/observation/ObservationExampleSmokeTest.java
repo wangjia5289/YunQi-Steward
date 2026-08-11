@@ -1,13 +1,13 @@
 package yunqi.zhibei.steward.example.observation;
 
-import yunqi.zhibei.steward.lifecycle.BoundResource;
-import yunqi.zhibei.steward.lifecycle.Health;
-import yunqi.zhibei.steward.lifecycle.ProbeScope;
-import yunqi.zhibei.steward.lifecycle.StartupBinding;
-import yunqi.zhibei.steward.observation.LifecycleEventFanOut;
-import yunqi.zhibei.steward.adapter.observability.jfr.JfrLifecycleAdapter;
-import yunqi.zhibei.steward.adapter.observability.opentelemetry.OpenTelemetryLifecycleAdapter;
-import yunqi.zhibei.steward.adapter.observability.slf4j.Slf4jLifecycleAdapter;
+import yunqi.zhibei.steward.control.resource.BoundResource;
+import yunqi.zhibei.steward.control.resource.Health;
+import yunqi.zhibei.steward.control.resource.ProbeScope;
+import yunqi.zhibei.steward.control.resource.StartupBinding;
+import yunqi.zhibei.steward.telemetry.LifecycleEventFanOut;
+import yunqi.zhibei.steward.telemetry.profile.jfr.JfrLifecycleAdapter;
+import yunqi.zhibei.steward.telemetry.trace.opentelemetry.OpenTelemetryLifecycleAdapter;
+import yunqi.zhibei.steward.telemetry.log.slf4j.Slf4jLifecycleAdapter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.common.CompletableResultCode;

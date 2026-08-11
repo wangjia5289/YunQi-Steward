@@ -15,41 +15,45 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-observation</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-lifecycle</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-refresh</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-restart</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-observability-micrometer</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-observability-jfr</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-observability-opentelemetry</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-observability-slf4j</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-telemetry-core</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-configuration-management-core</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-configuration-management-file-properties</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-resource-management-core</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-resource-management-refresh</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-resource-management-restart</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-telemetry-metric-management-micrometer</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-telemetry-profile-management-jfr</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-telemetry-trace-management-opentelemetry</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-telemetry-log-management-slf4j</artifactId><version>${project.version}</version></dependency>
             <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-testkit</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-configuration-nacos3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-redis-jedis-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-redis-jedis-v7</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-redis-lettuce-v6</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-redis-redisson-v4</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-mysql-connectorj-v9</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-mysql-mariadb-v3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-postgresql-jdbc-v42</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-clickhouse-jdbc-v0</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-elasticsearch-java-v9</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-minio-java-v8</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-nacos-client-v3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-neo4j-driver-v6</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-etcd-jetcd-v0</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-zookeeper-curator-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-milvus-sdk-v2</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-elasticjob-lite-v3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-rocketmq-client-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-powerjob-worker-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-xxljob-core-v2</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-seata-tm-v2</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-kafka-client-v3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-pulsar-client-v3</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-rabbitmq-client-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-mongodb-sync-v5</artifactId><version>${project.version}</version></dependency>
-            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-binding-consul-api-v1</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-configuration-source-testkit</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-control-configuration-management-nacos-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-redis-library-client-jedis-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-redis-library-client-jedis-v7</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-redis-library-client-lettuce-v6</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-redis-library-client-redisson-v4</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-redis-framework-client-spring-framework-v6-jedis-v7</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-mysql-library-client-connectorj-v9</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-mysql-library-client-mariadb-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-postgresql-library-client-jdbc-v42</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-clickhouse-library-client-jdbc-v0</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-elasticsearch-library-client-java-v9</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-minio-library-client-java-v8</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-nacos-library-client-nacos-client-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-neo4j-library-client-driver-v6</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-etcd-library-client-jetcd-v0</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-zookeeper-library-client-curator-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-milvus-library-client-sdk-v2</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-elasticjob-library-client-lite-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-rocketmq-library-client-rocketmq-client-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-powerjob-library-client-worker-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-xxljob-library-client-core-v2</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-seata-library-client-tm-v2</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-kafka-library-client-kafka-clients-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-pulsar-library-client-pulsar-client-v3</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-rabbitmq-library-client-amqp-client-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-mongodb-library-client-sync-v5</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>${project.groupId}</groupId><artifactId>steward-interaction-consul-library-client-api-v1</artifactId><version>${project.version}</version></dependency>
         </dependencies>
     </dependencyManagement>
 </project>

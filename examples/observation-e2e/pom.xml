@@ -22,23 +22,27 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-refresh</artifactId>
+            <artifactId>steward-control-configuration-management-core</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-observability-micrometer</artifactId>
+            <artifactId>steward-control-resource-management-refresh</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-observability-jfr</artifactId>
+            <artifactId>steward-telemetry-metric-management-micrometer</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-observability-opentelemetry</artifactId>
+            <artifactId>steward-telemetry-profile-management-jfr</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>steward-observability-slf4j</artifactId>
+            <artifactId>steward-telemetry-trace-management-opentelemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>steward-telemetry-log-management-slf4j</artifactId>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry</groupId>
