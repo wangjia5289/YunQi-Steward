@@ -89,17 +89,19 @@ the project or passed as a Maven command-line argument. A minimal consumer setup
 
 ## Binary Baseline
 
-The first `0.1.0` build has no older published artifact and therefore allows japicmp's missing-old-
-version condition. After `0.1.0` is published to the configured artifact repository, development
-must move to a later version and run:
+The first `0.1.0` build had no older published artifact and therefore used japicmp's
+missing-old-version condition. Development now continues on `0.1.1-SNAPSHOT`; the strict profile
+resolves `0.1.0` from the private Packages repository and runs:
 
 ```bash
 mvn -Pbaseline-compatibility clean verify
 ```
 
-That profile sets `ignoreMissingOldVersion=false`; an unavailable baseline or an unapproved binary
-incompatibility fails the build. External repository publication, signing, and credentials are
-release-operator responsibilities and cannot be proven by this source checkout.
+That profile sets `ignoreMissingOldVersion=false` and activates the private Packages repository.
+The local command needs a `github` server in `settings.xml` with a token that has `read:packages`.
+The `Release Gate` workflow runs this japicmp-only job on `main` pushes and manual runs, while
+same-repository pull requests also receive it. The neighboring verify job owns the complete test
+suite; an unavailable baseline or an unapproved binary incompatibility fails the strict job.
 
 ## Docker Verification
 

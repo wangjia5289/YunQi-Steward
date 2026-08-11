@@ -6,7 +6,7 @@
 
     <groupId>yunqi.zhibei</groupId>
     <artifactId>steward-parent</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Yunqi Steward</name>
@@ -388,6 +388,15 @@
             <properties>
                 <japicmp.ignoreMissingOldVersion>false</japicmp.ignoreMissingOldVersion>
             </properties>
+            <repositories>
+                <repository>
+                    <id>github</id>
+                    <name>YunQi Maven Packages</name>
+                    <url>https://maven.pkg.github.com/wangjia5289/YunQi-Maven-Packages</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
+            </repositories>
         </profile>
     </profiles>
 </project>

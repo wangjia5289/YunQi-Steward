@@ -93,6 +93,10 @@ class PropertiesFileConfigurationSourceTest {
             assertThat(source.status().lastFailureStage())
                     .isEqualTo(yunqi.zhibei.steward.control.configuration.ConfigurationSourceStatus.FailureStage.LOAD);
 
+            source.refresh();
+            assertThat(source.awaitIdle(TIMEOUT)).isTrue();
+            assertThat(source.status().failures()).isEqualTo(1);
+
             writeContent(file, "host=redis-c\npassword=recovered-secret\n");
             source.refresh();
             assertThat(source.awaitIdle(TIMEOUT)).isTrue();

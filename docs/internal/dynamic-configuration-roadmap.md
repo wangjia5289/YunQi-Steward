@@ -290,7 +290,7 @@ baseline remains unchanged.
 
 ## Phase 14: First Release And Compatibility Baseline
 
-Status: LOCAL GATES COMPLETED; EXTERNAL PUBLICATION PENDING
+Status: COMPLETED
 
 Prepare the first consumable release and make it the compatibility baseline for subsequent changes.
 Finalize the public API inventory, versioning policy, BOM coordinates, source and Javadoc artifacts,
@@ -304,13 +304,14 @@ ownership and shutdown rules. After the baseline artifact is available, `japicmp
 fails the build on unapproved binary incompatibility instead of warning that the old artifact is
 missing.
 
-Completion record: the reactor is versioned `0.1.0`; public API, versioning, release notes, BOM,
+Completion record: the reactor was released as `0.1.0`; public API, versioning, release notes, BOM,
 plane ownership, and upgrade rules are documented. `scripts/stage-release.sh` ran the full
 release profile and verified 41 POMs plus 39 main, source, and Javadoc JAR sets. A structured verifier
 matched every staged JAR to the 39 BOM entries and confirmed the example and benchmarks were not
-published. External `0.1.0` publication cannot be performed from this checkout without repository
-coordinates, signing material, and credentials. Once published, the documented
-`baseline-compatibility` profile makes a missing old version fatal.
+published. The `0.1.0` artifacts are published to the shared private GitHub Packages repository
+and the `v0.1.0` GitHub Release is complete. Development continues on `0.1.1-SNAPSHOT`; the
+documented `baseline-compatibility` profile now resolves that release and makes a missing old
+version fatal.
 
 ## Phase 15: Docker-Backed CI Verification
 

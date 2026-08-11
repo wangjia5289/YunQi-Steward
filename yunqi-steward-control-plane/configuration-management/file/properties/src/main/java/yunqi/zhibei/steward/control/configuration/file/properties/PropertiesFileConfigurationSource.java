@@ -60,6 +60,7 @@ public final class PropertiesFileConfigurationSource<C>
     private long recoveries;
     private ConfigurationSourceStatus.FailureStage lastFailureStage =
             ConfigurationSourceStatus.FailureStage.NONE;
+    private byte[] lastFailureDigest;
     private boolean refreshPending;
     private boolean workerScheduled;
     private boolean closed;
@@ -234,7 +235,7 @@ public final class PropertiesFileConfigurationSource<C>
                     changed = true;
                 }
                 if (!key.reset()) {
-                    recordUnavailable(ConfigurationSourceStatus.FailureStage.WATCH);
+                    recordUnavailable(ConfigurationSourceStatus.FailureStage.WATCH, null);
                     return;
                 }
                 if (changed) {
@@ -246,7 +247,7 @@ public final class PropertiesFileConfigurationSource<C>
         } catch (ClosedWatchServiceException ignored) {
             // Normal source shutdown.
         } catch (RuntimeException failure) {
-            recordUnavailable(ConfigurationSourceStatus.FailureStage.WATCH);
+            recordUnavailable(ConfigurationSourceStatus.FailureStage.WATCH, null);
         }
     }
 
@@ -259,11 +260,8 @@ public final class PropertiesFileConfigurationSource<C>
             loaderExecutor.execute(this::drainRefreshes);
         } catch (RuntimeException failure) {
             workerScheduled = false;
-            failures++;
-            lastFailureStage = ConfigurationSourceStatus.FailureStage.WATCH;
-            available = false;
+            recordUnavailable(ConfigurationSourceStatus.FailureStage.WATCH, null);
             monitor.notifyAll();
-            signalSubscribers();
         }
     }
 
@@ -279,7 +277,7 @@ public final class PropertiesFileConfigurationSource<C>
                 reload();
             }
         } catch (Error failure) {
-            recordUnavailable(ConfigurationSourceStatus.FailureStage.LOAD);
+            recordUnavailable(ConfigurationSourceStatus.FailureStage.LOAD, null);
             throw failure;
         } finally {
             synchronized (monitor) {
@@ -294,20 +292,28 @@ public final class PropertiesFileConfigurationSource<C>
         try {
             apply(load());
         } catch (SourceFailure failure) {
-            recordUnavailable(failure.stage());
+            recordUnavailable(failure.stage(), failure.digest());
         }
     }
 
-    private void recordUnavailable(ConfigurationSourceStatus.FailureStage stage) {
+    private void recordUnavailable(
+            ConfigurationSourceStatus.FailureStage stage,
+            byte[] failureDigest) {
         boolean notify;
         synchronized (monitor) {
             if (closed) {
+                return;
+            }
+            if (!available
+                    && lastFailureStage == stage
+                    && Arrays.equals(lastFailureDigest, failureDigest)) {
                 return;
             }
             notify = available;
             available = false;
             failures++;
             lastFailureStage = Objects.requireNonNull(stage, "stage");
+            lastFailureDigest = failureDigest == null ? null : failureDigest.clone();
         }
         if (notify) {
             signalSubscribers();
@@ -334,6 +340,7 @@ public final class PropertiesFileConfigurationSource<C>
             if (recovering) {
                 recoveries++;
             }
+            lastFailureDigest = null;
         }
         if (notify) {
             signalSubscribers();
@@ -355,7 +362,7 @@ public final class PropertiesFileConfigurationSource<C>
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.ISO_8859_1)) {
             properties.load(reader);
         } catch (Exception failure) {
-            throw sourceFailure(ConfigurationSourceStatus.FailureStage.READ);
+            throw sourceFailure(ConfigurationSourceStatus.FailureStage.READ, null);
         }
         byte[] contentDigest = digest(properties);
         try {
@@ -363,9 +370,9 @@ public final class PropertiesFileConfigurationSource<C>
             return new Loaded<>(configuration, contentDigest);
         } catch (InterruptedException failure) {
             Thread.currentThread().interrupt();
-            throw sourceFailure(ConfigurationSourceStatus.FailureStage.LOAD);
+            throw sourceFailure(ConfigurationSourceStatus.FailureStage.LOAD, contentDigest);
         } catch (Exception failure) {
-            throw sourceFailure(ConfigurationSourceStatus.FailureStage.LOAD);
+            throw sourceFailure(ConfigurationSourceStatus.FailureStage.LOAD, contentDigest);
         }
     }
 
@@ -409,8 +416,10 @@ public final class PropertiesFileConfigurationSource<C>
                 "No complete properties configuration is currently available");
     }
 
-    private static SourceFailure sourceFailure(ConfigurationSourceStatus.FailureStage stage) {
-        return new SourceFailure(stage);
+    private static SourceFailure sourceFailure(
+            ConfigurationSourceStatus.FailureStage stage,
+            byte[] digest) {
+        return new SourceFailure(stage, digest);
     }
 
     /** Converts one properties snapshot into a complete immutable typed configuration. */
@@ -427,14 +436,20 @@ public final class PropertiesFileConfigurationSource<C>
         private static final long serialVersionUID = 1L;
 
         private final ConfigurationSourceStatus.FailureStage stage;
+        private final byte[] digest;
 
-        private SourceFailure(ConfigurationSourceStatus.FailureStage stage) {
+        private SourceFailure(ConfigurationSourceStatus.FailureStage stage, byte[] digest) {
             super("No complete properties configuration is currently available");
             this.stage = Objects.requireNonNull(stage, "stage");
+            this.digest = digest == null ? null : digest.clone();
         }
 
         private ConfigurationSourceStatus.FailureStage stage() {
             return stage;
+        }
+
+        private byte[] digest() {
+            return digest;
         }
     }
 
