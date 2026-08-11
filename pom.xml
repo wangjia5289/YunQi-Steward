@@ -11,6 +11,22 @@
 
     <name>Yunqi Steward</name>
     <description>Interaction, control, and telemetry planes for managed middleware clients</description>
+    <url>https://github.com/wangjia5289/YunQi-Steward</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/wangjia5289/YunQi-Steward.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/wangjia5289/YunQi-Steward.git</developerConnection>
+        <url>https://github.com/wangjia5289/YunQi-Steward</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>YunQi Maven Packages</name>
+            <url>https://maven.pkg.github.com/wangjia5289/YunQi-Maven-Packages</url>
+        </repository>
+    </distributionManagement>
 
     <modules>
         <!-- Telemetry plane -->

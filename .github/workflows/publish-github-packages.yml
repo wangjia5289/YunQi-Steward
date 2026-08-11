@@ -1,0 +1,138 @@
+name: Publish Maven Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version to publish and tag
+        required: true
+        default: '0.1.0'
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: publish-maven-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PACKAGES_USERNAME: ${{ secrets.PACKAGES_USERNAME }}
+      PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21 and GitHub Packages credentials
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: github
+          server-username: PACKAGES_USERNAME
+          server-password: PACKAGES_TOKEN
+
+      - name: Validate release ref and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_VERSION" =~ ^0\.[0-9]+\.[0-9]+$ ]] || {
+            echo "release version must be a stable 0.x.y version" >&2
+            exit 1
+          }
+          project_version=$(mvn --batch-mode --no-transfer-progress help:evaluate \
+            -Dexpression=project.version -q -DforceStdout)
+          [[ "$project_version" == "$RELEASE_VERSION" ]] || {
+            echo "POM version $project_version does not match $RELEASE_VERSION" >&2
+            exit 1
+          }
+          [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/${{ github.event.repository.default_branch }})" ]] || {
+            echo "workflow must publish the current default branch tip" >&2
+            exit 1
+          }
+          [[ -z "$(git status --porcelain)" ]] || {
+            echo "checkout is not clean" >&2
+            exit 1
+          }
+          tag="v${RELEASE_VERSION}"
+          if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null || \
+              git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "release tag already exists: $tag" >&2
+            exit 1
+          fi
+          grep -Fq "## ${RELEASE_VERSION} - " CHANGELOG.md || {
+            echo "CHANGELOG.md has no exact release heading for $RELEASE_VERSION" >&2
+            exit 1
+          }
+
+      - name: Run complete local release staging gate
+        run: scripts/stage-release.sh
+
+      - name: Publish artifacts to GitHub Packages
+        run: mvn --batch-mode --no-transfer-progress -Prelease-staging clean deploy
+
+      - name: Smoke test the published BOM and core artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          smoke_repo="$RUNNER_TEMP/maven-smoke-repository"
+          packages_url="https://maven.pkg.github.com/wangjia5289/YunQi-Maven-Packages"
+          for attempt in $(seq 1 12); do
+            if mvn --batch-mode --no-transfer-progress \
+                -Dmaven.repo.local="$smoke_repo" \
+                -DremoteRepositories="github::default::$packages_url" \
+                -Dartifact="yunqi.zhibei:steward-bom:${RELEASE_VERSION}:pom" \
+                -Dtransitive=false \
+                org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get; then
+              break
+            fi
+            [[ "$attempt" == 12 ]] && exit 1
+            sleep 10
+          done
+          mvn --batch-mode --no-transfer-progress \
+            -Dmaven.repo.local="$smoke_repo" \
+            -DremoteRepositories="github::default::$packages_url" \
+            -Dartifact="yunqi.zhibei:steward-control-resource-management-core:${RELEASE_VERSION}:jar" \
+            -Dtransitive=false \
+            org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get
+
+      - name: Create annotated release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v${RELEASE_VERSION}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --annotate "$tag" --message "Yunqi Steward ${RELEASE_VERSION}"
+          git push origin "refs/tags/$tag"
+
+      - name: Create GitHub Release from changelog
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          awk -v heading="## ${RELEASE_VERSION} - " '
+            index($0, heading) == 1 { found=1; next }
+            found && /^## / { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md > "$notes"
+          test -s "$notes"
+          gh release create "v${RELEASE_VERSION}" \
+            --verify-tag \
+            --title "Yunqi Steward ${RELEASE_VERSION}" \
+            --notes-file "$notes"
