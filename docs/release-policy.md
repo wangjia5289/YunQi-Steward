@@ -99,9 +99,9 @@ mvn -Pbaseline-compatibility clean verify
 
 That profile sets `ignoreMissingOldVersion=false` and activates the private Packages repository.
 The local command needs a `github` server in `settings.xml` with a token that has `read:packages`.
-The `Release Gate` workflow runs this job on `main` pushes and manual runs, while same-repository
-pull requests also receive the job. An unavailable baseline or an unapproved binary incompatibility
-fails the build.
+The `Release Gate` workflow runs this japicmp-only job on `main` pushes and manual runs, while
+same-repository pull requests also receive it. The neighboring verify job owns the complete test
+suite; an unavailable baseline or an unapproved binary incompatibility fails the strict job.
 
 ## Docker Verification
 

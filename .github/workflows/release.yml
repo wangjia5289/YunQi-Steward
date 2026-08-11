@@ -124,4 +124,5 @@ jobs:
           }
 
       - name: Run strict binary compatibility gate
-        run: mvn --batch-mode --no-transfer-progress -Pbaseline-compatibility clean verify
+        # The verify job above owns the full asynchronous and container-backed test suite.
+        run: mvn --batch-mode --no-transfer-progress -Pbaseline-compatibility -DskipTests clean verify
