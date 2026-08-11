@@ -8,12 +8,12 @@ them available at runtime.
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-binding-redis-jedis-v7</artifactId>
+    <artifactId>steward-interaction-redis-library-client-jedis-v7</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
 
-To move to Lettuce, replace this artifact with `steward-binding-redis-lettuce-v6`, update native call sites,
+To move to Lettuce, replace this artifact with `steward-interaction-redis-library-client-lettuce-v6`, update native call sites,
 and deploy. No configuration value can perform that change inside a running JVM.
 
 ## Build Typed Configuration
@@ -138,9 +138,9 @@ generic Redis configuration because the SDKs expose different native client type
 
 | SDK artifact | Standalone | Cluster |
 | --- | --- | --- |
-| `steward-binding-redis-jedis-v7` | `Jedis7Configuration` / `Jedis7Binding` / `JedisPooled` | `Jedis7ClusterConfiguration` / `Jedis7ClusterBinding` / `JedisCluster` |
-| `steward-binding-redis-lettuce-v6` | `Lettuce6Configuration` / `Lettuce6Binding` / `RedisClient` | `Lettuce6ClusterConfiguration` / `Lettuce6ClusterBinding` / `RedisClusterClient` |
-| `steward-binding-redis-redisson-v4` | `Redisson4Configuration` / `Redisson4Binding` / `RedissonClient` | `Redisson4ClusterConfiguration` / `Redisson4ClusterBinding` / `RedissonClient` |
+| `steward-interaction-redis-library-client-jedis-v7` | `Jedis7Configuration` / `Jedis7Binding` / `JedisPooled` | `Jedis7ClusterConfiguration` / `Jedis7ClusterBinding` / `JedisCluster` |
+| `steward-interaction-redis-library-client-lettuce-v6` | `Lettuce6Configuration` / `Lettuce6Binding` / `RedisClient` | `Lettuce6ClusterConfiguration` / `Lettuce6ClusterBinding` / `RedisClusterClient` |
+| `steward-interaction-redis-library-client-redisson-v4` | `Redisson4Configuration` / `Redisson4Binding` / `RedissonClient` | `Redisson4ClusterConfiguration` / `Redisson4ClusterBinding` / `RedissonClient` |
 
 Cluster configurations accept multiple seed nodes and expose topology-specific controls such as
 redirect limits, topology refresh intervals, and master/replica pool sizes where the selected SDK
@@ -204,7 +204,7 @@ engine explicitly in addition to the selected binding:
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-refresh</artifactId>
+    <artifactId>steward-control-resource-management-refresh</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -324,7 +324,7 @@ Add the optional restart-requirement control plane when the application must det
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-restart</artifactId>
+    <artifactId>steward-control-resource-management-restart</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -371,9 +371,83 @@ configuration fails. Reconfiguration requires another JVM.
 
 ## Spring And Other Frameworks
 
-There is no framework module. Register a normal `BoundResource` or native client bean and attach
-`close()` to the framework lifecycle. For startup-only bindings, keep `BoundResource` itself as the
-owned bean. For Seata, call `initialize(...)` during application startup.
+The Spring Framework 6 and Jedis 7 combination has its own framework-client artifact. Its coordinate
+contains both version lines because compatibility with Spring and compatibility with Jedis are
+independent:
+
+```xml
+<dependency>
+    <groupId>yunqi.zhibei</groupId>
+    <artifactId>steward-interaction-redis-framework-client-spring-framework-v6-jedis-v7</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+For startup-fixed use, register the static factory in a plain Spring Framework configuration:
+
+```java
+@Configuration
+class RedisConfiguration {
+    @Bean
+    Jedis7SpringFactoryBean redis() {
+        return new Jedis7SpringFactoryBean(
+                Jedis7Configuration.builder()
+                        .host("redis.internal")
+                        .build());
+    }
+}
+```
+
+Application components inject and use `JedisPooled`; the factory does not introduce a Steward
+command API. Spring calls `afterPropertiesSet()` to create and health-check the client, and calls
+`destroy()` during context shutdown to close it.
+
+For dynamic same-type replacement, register a configuration source and the managed factory:
+
+```java
+@Configuration
+class DynamicRedisConfiguration {
+    @Bean
+    MutableConfigurationSource<Jedis7Configuration> redisConfigurationSource() {
+        return new MutableConfigurationSource<>(
+                Jedis7Configuration.builder()
+                        .host("redis.internal")
+                        .build());
+    }
+
+    @Bean
+    Jedis7ManagedResourceFactoryBean redis(
+            ConfigurationSource<Jedis7Configuration> source) {
+        return new Jedis7ManagedResourceFactoryBean(source);
+    }
+}
+```
+
+Application components inject the managed owner rather than a replaceable native reference:
+
+```java
+final class RedisRepository {
+    private final ManagedResource<JedisPooled, Jedis7Configuration> redis;
+
+    RedisRepository(ManagedResource<JedisPooled, Jedis7Configuration> redis) {
+        this.redis = redis;
+    }
+
+    String find(String key) {
+        return redis.execute(client -> client.get(key));
+    }
+}
+```
+
+The dynamic factory owns and closes the `ManagedResource`; the configuration source remains a
+separate caller-owned bean. A `PropertiesFileConfigurationSource` or `Nacos3ConfigurationSource`
+can replace the in-memory source without changing the injected managed type. Do not inject
+`JedisPooled` in dynamic mode: an injected native object remains tied to the generation from which
+it came and cannot be replaced transparently.
+
+This is a Spring Framework integration, not Spring Boot auto-configuration. Framework/library
+combinations without a shipped module can still expose a `BoundResource` or `ManagedResource` as an
+ordinary framework-owned bean. For Seata, call `initialize(...)` during application startup.
 
 ## Nacos 3 Configuration Source
 
@@ -382,7 +456,7 @@ Add the provider adapter in addition to the selected refresh-safe binding:
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-configuration-nacos3</artifactId>
+    <artifactId>steward-control-configuration-management-nacos-v3</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -437,6 +511,45 @@ The adapter supports only same-type replacement through `ResourceBinding`. Suppl
 does not make `StartupBinding` resources refreshable; those changes still require a restart or
 rolling deployment.
 
+## Properties File Configuration Source
+
+For a framework-neutral local deployment, use the optional JDK-only properties-file adapter:
+
+```xml
+<dependency>
+    <groupId>yunqi.zhibei</groupId>
+    <artifactId>steward-control-configuration-management-file-properties</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+The adapter watches one `.properties` file and calls an application-owned loader whenever the file
+is replaced or modified. The loader is the boundary for validation and secret resolution:
+
+```java
+try (var source = PropertiesFileConfigurationSource.open(
+        Path.of("/etc/orders/redis.properties"),
+        properties -> Jedis7Configuration.builder()
+                .host(required(properties, "host"))
+                .port(Integer.parseInt(required(properties, "port")))
+                .password(loadPassword(properties))
+                .build());
+     var redis = ManagedResource.bind(source, new Jedis7Binding())) {
+    redis.execute(client -> client.set("answer", "42"));
+}
+```
+
+The source reads Java properties using ISO-8859-1 semantics, ignores formatting-only changes, and
+publishes a new positive local revision only after the loader returns a complete configuration. A
+read, parse, validation, or secret failure leaves the previously applied resource serving; the
+source reports itself temporarily unavailable until a later valid file is loaded. Use `refresh()`
+when another watcher or a test needs to request a reload explicitly. This adapter does not parse
+YAML or create a Spring bean; Spring applications may use it as the source behind their own
+composition code. Kubernetes projected-volume `..data` symlink swaps are detected through the
+parent directory watcher, and the source never publishes a partial or temporarily absent file.
+See [secret composition examples](secret-composition.md) for Vault, KMS, and mounted Secret
+loaders.
+
 ## Custom Configuration Services
 
 `MutableConfigurationSource<C>` is useful for tests and programmatic refresh. An external
@@ -450,10 +563,11 @@ provider-specific revision strings through the core SPI.
 Initial `snapshot()` failure aborts managed-resource startup and closes the subscription. A later
 failure is recorded while the active generation remains usable. `Subscription.close()` must be
 idempotent, and no new callback may begin after it returns. These types live in the
-`yunqi.zhibei.steward.refresh` package of `steward-refresh` and are consumed by `ManagedResource` or the
+`yunqi.zhibei.steward.control.configuration` package of
+`steward-control-configuration-management-core` and are consumed by `ManagedResource` or the
 optional startup-only `RestartRequiredMonitor`. The Nacos 3 adapter follows this rule in
-`steward-configuration-nacos3`; future provider adapters such as Apollo also belong in separate connector artifacts
-rather than individual client bindings.
+`steward-control-configuration-management-nacos-v3`; future provider adapters such as Apollo also
+belong in separate configuration-management artifacts rather than individual interaction clients.
 
 ## Health Check Semantics
 
@@ -474,7 +588,10 @@ service monitoring when deciding production readiness.
 
 ## Integration Tests
 
-The Jedis 7, Lettuce 6, and Redisson 4 modules start Redis 7.4.2 with Testcontainers and verify
-startup health, real reads and writes, and resource closure. A Docker-compatible runtime is needed
-to execute these tests. When it is unavailable, JUnit reports them as skipped instead of silently
-pretending that an integration test ran.
+The Jedis 7, Lettuce 6, Redisson 4, and Spring Framework 6/Jedis 7 modules start Redis 7.4.2 with
+Testcontainers. In addition to startup health, real reads/writes, and closure, the Spring dynamic
+suite uses two Redis servers to verify programmatic, properties-file, and Nacos-driven replacement,
+unreachable and credential-failed rollback, later recovery, lease-protected draining, and complete
+Spring shutdown. A Docker-compatible runtime is needed to execute these tests. When it is
+unavailable, JUnit reports them as skipped instead of silently pretending that an integration test
+ran.

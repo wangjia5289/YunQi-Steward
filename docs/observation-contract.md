@@ -21,7 +21,7 @@ LifecycleEventDelivery
                          +-- polled by optional pipeline-health adapters
 ```
 
-`steward-observation` has no third-party runtime dependency. Lifecycle modules depend only on this
+`steward-telemetry-core` has no third-party runtime dependency. Lifecycle modules depend only on this
 project-owned contract. A Micrometer, OpenTelemetry, SLF4J, JFR, or platform-specific dependency is
 allowed only in its optional adapter module.
 
@@ -131,8 +131,7 @@ publish their own exporter failures and queue-loss policy outside the lifecycle 
 specific labels and resource identity belong to adapter registration, not `LifecycleEvent`.
 
 The disabled-path bytecode, allocation, and latency baseline is recorded in
-[`observation-performance.md`](observation-performance.md).
+[`observation-performance.md`](internal/observation-performance.md).
 The optional Micrometer, JFR, OpenTelemetry, and SLF4J implementations and their distinct ownership
 models are documented in [`observability-adapters.md`](observability-adapters.md).
-The policy for selecting, rejecting, and extending adapters is documented in
-[`observation-adapter-strategy.md`](observation-adapter-strategy.md).
+The adapter admission policy is documented in [`observability-adapters.md`](observability-adapters.md).

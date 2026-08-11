@@ -14,13 +14,10 @@ LifecycleEventBuffer --fan-out daemon--> independent bounded adapter buffers
                                          +--> SLF4J structured records
 ```
 
-No adapter is a dependency of `steward-observation`, `steward-lifecycle`, `steward-refresh`,
-`steward-restart`, or any binding. Applications add only the adapter they use.
+No adapter is a dependency of `steward-telemetry-core`, `steward-control-resource-management-core`, `steward-control-resource-management-refresh`,
+`steward-control-resource-management-restart`, or any binding. Applications add only the adapter they use.
 
-This page documents how to use the current modules. The reasons for maintaining this reference set,
-the admission rules for future adapters, and the distinction between observation APIs and final
-destinations are documented in
-[`observation-adapter-strategy.md`](observation-adapter-strategy.md).
+This page documents how to use the current modules and the policy for extending the adapter set.
 
 ## Micrometer
 
@@ -29,7 +26,7 @@ Add the optional module:
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-observability-micrometer</artifactId>
+    <artifactId>steward-telemetry-metric-management-micrometer</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -113,6 +110,22 @@ on the registry's scrape thread. They weakly reference the owner and read only `
 Each `(owner, kind)` pair must have one registration. Closing its idempotent handle removes that
 fixed meter set but does not close the owner or event buffer.
 
+Configuration-source health is registered independently so applications do not need to bind a
+lifecycle owner just to observe a provider:
+
+```java
+var sourceMetrics = MicrometerConfigurationSourceMetrics.bind(
+        meterRegistry, "orders-config", configurationSource);
+```
+
+The source identity is a bounded ASCII name. This registration creates exactly 11 meters with one
+`source` tag: three one-hot `middleware.configuration.source.state` gauges, a
+`middleware.configuration.source.revision` gauge, monotonic `failures` and `recoveries` counters,
+and five one-hot `middleware.configuration.source.last.failure.stage` gauges (`none`, `read`,
+`load`, `watch`, `close`). The source is weakly referenced; counters retain their last monotonic
+value after collection, while live gauges return no fabricated state. Closing the registration is
+idempotent and removes all eleven meters without closing the source.
+
 ## JFR
 
 Add the JDK-only optional module:
@@ -120,7 +133,7 @@ Add the JDK-only optional module:
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-observability-jfr</artifactId>
+    <artifactId>steward-telemetry-profile-management-jfr</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -162,7 +175,7 @@ span processor, sampler, and exporter:
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-observability-opentelemetry</artifactId>
+    <artifactId>steward-telemetry-trace-management-opentelemetry</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -203,7 +216,7 @@ Add the API-only logging adapter. The application chooses and configures the SLF
 ```xml
 <dependency>
     <groupId>yunqi.zhibei</groupId>
-    <artifactId>steward-observability-slf4j</artifactId>
+    <artifactId>steward-telemetry-log-management-slf4j</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -301,3 +314,18 @@ fan-out, use owner, fan-out, adapter order. Once an event adapter closes and sea
 publication or distribution to that input is intentionally rejected. The Micrometer registration
 may be closed before or after its owner; close it before reusing the same `(owner, kind)` identity
 in a registry.
+
+## Adapter Policy
+
+The neutral contract owns lifecycle facts; an adapter owns their projection into metrics, logs,
+traces, or profiling markers; the application and downstream ecosystem own storage and export.
+The initial first-party set is deliberately limited to Micrometer, SLF4J, OpenTelemetry, and JFR.
+They cover polling, record emission, timed spans, and JVM-native events without adding vendor fields
+to the core contract.
+
+Add another first-party adapter only for a concrete deployment need that existing ecosystems cannot
+cover. It must consume the existing secret-free status or `LifecycleEvent` fields, isolate all
+third-party dependencies in its own optional module, keep publication non-blocking with bounded
+memory, and define redaction, loss accounting, ownership, shutdown, and concurrent-close tests.
+Destination-specific labels, payloads, exporters, dashboards, and alert rules remain application
+concerns.

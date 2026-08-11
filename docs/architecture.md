@@ -2,100 +2,114 @@
 
 ## Boundary
 
-The project has a small startup lifecycle module, optional refresh and restart-requirement control
-planes, and one module per tested native SDK line:
+The repository is organized into interaction, control, and telemetry planes. The planes are
+architectural groupings rather than three aggregate runtime JARs; every implementation remains an
+independently selectable Maven module.
 
 ```text
-core/
-    observation/       # neutral facts and bounded non-waiting delivery
-    lifecycle/         # startup ownership and binding contracts
-    refresh/           # optional same-type replacement engine
-    restart/           # optional rollout-required monitor
-adapters/
-    configuration/     # external typed snapshot sources
-        nacos3/
-    observability/     # optional projections of neutral facts
-        micrometer/
-        jfr/
-        opentelemetry/
-        slf4j/
-bindings/
+yunqi-steward-control-plane/
+    configuration-management/
+        core/           # typed snapshots and source contracts
+        file/properties/ # JDK-only local properties-file source
+        nacos/v3/       # Nacos configuration source
+    resource-management/
+        core/           # startup ownership and binding contracts
+        refresh/        # optional same-type replacement engine
+        restart/        # optional rollout-required monitor
+yunqi-steward-interaction-plane/
     redis/
-        jedis/
+        library-client/
+          jedis/
             v5/
             v7/
-        lettuce/v6/
-        redisson/v4/
+          lettuce/v6/
+          redisson/v4/
+        framework-client/
+          spring-framework/v6/jedis/v7/
     mysql/
-        connectorj/v9/
-        mariadb/v3/
-    postgresql/jdbc/v42/
-    clickhouse/jdbc/v0/
-    mongodb/sync/v5/
-    neo4j/driver/v6/
-    elasticsearch/java/v9/
-    milvus/sdk/v2/
-    minio/java/v8/
-    nacos/client/v3/
-    etcd/jetcd/v0/
-    zookeeper/curator/v5/
-    consul/api/v1/
-    kafka/client/v3/
-    pulsar/client/v3/
-    rabbitmq/client/v5/
-    rocketmq/client/v5/
-    elasticjob/lite/v3/
-    powerjob/worker/v5/
-    xxljob/core/v2/
-    seata/tm/v2/
+        library-client/connectorj/v9/
+        library-client/mariadb/v3/
+    kafka/library-client/kafka-clients/v3/
+    ...
+yunqi-steward-telemetry-plane/
+    telemetry-core/     # neutral facts and bounded non-waiting delivery
+    log-management/slf4j/
+    metric-management/micrometer/
+    trace-management/opentelemetry/
+    profile-management/jfr/
 support/               # test-only shared support
 examples/              # runnable examples; not published
 benchmarks/            # performance evidence; not published
 bom/                   # published dependency management
 ```
 
-The module boundary is also the provider-selection boundary. The application chooses a binding in
-Maven or Gradle; the runtime never searches for, downloads, or switches providers.
+The interaction module boundary is also the provider-selection boundary. The application chooses a
+client implementation in Maven or Gradle; the runtime never searches for, downloads, or switches
+providers. Direct library clients and framework clients are siblings. A framework client names the
+concrete access library it integrates instead of being nested inside that library's module.
 
-Binding layout is structural, not taxonomic:
+Library-client layout is structural:
 
 ```text
-bindings/<middleware>/<driver>/v<major>
-steward-binding-<middleware>-<driver>-v<major>
-yunqi.zhibei.steward.binding.<middleware>.<driver>.v<major>
+yunqi-steward-interaction-plane/<middleware>/library-client/<library>/v<library-major>
+steward-interaction-<middleware>-library-client-<library>-v<library-major>
+yunqi.zhibei.steward.interaction.<middleware>.library.client.<library>.v<library-major>
 ```
 
-Middleware names are direct children of `bindings`; broad functional categories are deliberately
-absent. A middleware can expose multiple drivers, and a driver can retain multiple incompatible
-major lines side by side. The `v` prefix keeps the version segment legal in Java packages.
+Framework integrations carry two independent compatibility axes:
+
+```text
+yunqi-steward-interaction-plane/<middleware>/framework-client/<framework>/v<framework-major>/<library>/v<library-major>
+steward-interaction-<middleware>-framework-client-<framework>-v<framework-major>-<library>-v<library-major>
+yunqi.zhibei.steward.interaction.<middleware>.framework.client.<framework>.v<framework-major>.<library>.v<library-major>
+```
+
+The shipped example is `redis/framework-client/spring-framework/v6/jedis/v7`. It depends on the
+Jedis 7 library-client module and Spring Framework 6. Its static factory exposes the native
+`JedisPooled` type for startup-fixed use. Its dynamic factory exposes
+`ManagedResource<JedisPooled, Jedis7Configuration>` so each operation obtains the current
+generation through a lease. Both map Spring initialization and destruction to Steward's resource
+lifecycle. Changing either major line selects a different module rather than hiding compatibility
+behind runtime detection.
+
+Middleware names are direct children of the interaction plane. Each middleware separates direct
+library clients from higher-level framework clients. A library can retain multiple
+incompatible major lines side by side. The `v` prefix keeps the version segment legal in Java
+packages.
 
 Packages encode their architectural responsibility:
 
 ```text
-yunqi.zhibei.steward.observation
-yunqi.zhibei.steward.lifecycle
-yunqi.zhibei.steward.refresh
-yunqi.zhibei.steward.restart
-yunqi.zhibei.steward.adapter.configuration.nacos3
-yunqi.zhibei.steward.adapter.observability.micrometer
-yunqi.zhibei.steward.binding.redis.jedis.v7
-yunqi.zhibei.steward.binding.kafka.client.v3
+yunqi.zhibei.steward.telemetry
+yunqi.zhibei.steward.control.configuration
+yunqi.zhibei.steward.control.resource
+yunqi.zhibei.steward.control.resource.refresh
+yunqi.zhibei.steward.control.resource.restart
+yunqi.zhibei.steward.control.configuration.nacos.v3
+yunqi.zhibei.steward.telemetry.metric.micrometer
+yunqi.zhibei.steward.interaction.redis.library.client.jedis.v7
+yunqi.zhibei.steward.interaction.redis.framework.client.spring.framework.v6.jedis.v7
+yunqi.zhibei.steward.interaction.kafka.library.client.kafka.clients.v3
 yunqi.zhibei.steward.support.testing
 ```
 
-Core packages remain product-owned and vendor-neutral. Adapter packages identify the external
-integration. Binding packages include the middleware, implementation, and SDK major line; this
-prevents split packages when two binding artifacts are present during migration or testing.
+Control-plane packages remain product-owned and vendor-neutral. Interaction packages include the
+middleware, client form, implementation, and SDK major line; this prevents split packages when two
+client artifacts are present during migration or testing. Telemetry implementation packages name
+the signal family and external API they project to.
 
-Dependencies point toward core. Core does not import native SDKs, Micrometer, OpenTelemetry,
-SLF4J, JFR adapters, or configuration-center clients. `support` is test scope only, and examples
-and benchmarks are excluded from publication.
+Dependencies point toward the small control and telemetry contracts. Resource management depends
+on configuration management for typed desired-state snapshots and on telemetry core for neutral
+lifecycle facts. Interaction modules implement resource-management ports. Concrete telemetry
+modules consume control-plane status and telemetry-core events. None of the control modules imports
+a native SDK, Micrometer, OpenTelemetry, SLF4J, JFR adapter, or configuration-center client.
+`support` is test scope only, and examples and benchmarks are excluded from publication.
 
 ## Observation Boundary
 
 Current state remains available through `BoundResource.state()`, `ManagedResourceStatus`, and
 `RestartRequiredStatus`. Discrete low-frequency transitions use the independent
-`steward-observation` contract. [`observation-contract.md`](observation-contract.md) defines the
+`steward-telemetry-core` contract. [`observation-contract.md`](observation-contract.md) defines the
 complete field set, audited emission points, redaction rules, ordering, and overflow behavior.
 
 Lifecycle and binding modules contain no Micrometer, OpenTelemetry, SLF4J, JFR, or profiling-tool
@@ -119,8 +133,8 @@ through `resource()` until close.
 
 `ResourceBinding<C,T>` is a narrower promise: old and candidate resources may safely overlap while
 health checking and draining occur. It extends `StartupBinding`, so it can be used in either mode.
-The marker contract remains in lightweight `steward-lifecycle`; the implementation that consumes it is
-packaged separately in `steward-refresh` under `yunqi.zhibei.steward.refresh`. Both
+The marker contract remains in lightweight `steward-control-resource-management-core`; the implementation that consumes it is
+packaged separately in `steward-control-resource-management-refresh` under `yunqi.zhibei.steward.control.resource.refresh`. Both
 `ManagedResource.bind(source, binding)` and `ManagedResource.builder(source, binding)` require a
 `ResourceBinding`; the Builder cannot replace its factory or closer independently.
 
@@ -157,7 +171,7 @@ shutdown can remain blocked inside vendor code.
 
 ## Same-Type Refresh
 
-In-process refresh is opt-in. Applications must add `steward-refresh`; selecting a binding alone
+In-process refresh is opt-in. Applications must add `steward-control-resource-management-refresh`; selecting a binding alone
 does not pull the refresh engine into the runtime classpath. `ManagedResource<T,C>` is available
 only for a `ResourceBinding<C,T>` whose SDK permits overlapping instances. Startup reads and
 reconciles the first configuration synchronously. Later source callbacks only mark work pending and
@@ -237,13 +251,19 @@ connector may implement `ConfigurationSource<C>` in a separate integration modul
 the refresh engine do not depend directly on a configuration-center SDK. The connector resolves
 provider-specific ordering before assigning a source-local revision.
 
+The optional `configuration-management-file-properties` module follows the same boundary for local
+deployments. It watches one Java `.properties` file, invokes an application-owned loader to produce
+one complete typed configuration, and publishes source-local revisions. It intentionally does not
+parse YAML, bind Spring Boot properties, read environment variables, or fetch secrets. Those concerns
+remain in the host application's composition layer or a separate source adapter.
+
 ## Startup-Only SDKs
 
 RocketMQ, PowerJob, and XXL-JOB bind process-level identities, ports, groups, or static state and
 use `StartupBinding`. They can be owned by `BoundResource`, but cannot be passed to the managed
 refresh API. Reconfiguration requires an application restart or rolling deployment.
 
-The optional `steward-restart` module closes the detection gap without changing that ownership
+The optional `steward-control-resource-management-restart` module closes the detection gap without changing that ownership
 rule. The application starts a resource from one `ConfigurationSnapshot`, then calls
 `RestartRequiredMonitor.watch(source, snapshot.revision())`. The monitor installs its source
 subscription before checking the latest snapshot, so a complete update which arrived during native
@@ -337,4 +357,4 @@ does not add a common client API.
 - Runtime switching between SDKs or incompatible major lines.
 - Provider coordinates, capabilities, SPI discovery, or plugin class loaders.
 - Runtime dependency download or classpath isolation.
-- Framework-specific starters, Spring configuration, retry, tracing, or service-mesh policy.
+- Spring Boot auto-configuration and framework-owned retry, tracing, or service-mesh policy.

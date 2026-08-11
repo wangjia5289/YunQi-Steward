@@ -14,7 +14,7 @@ status/event facts under the adapter admission rules.
 
 ## Artifact Set
 
-The `yunqi.zhibei:steward-bom:0.1.0` BOM manages all 35 published JAR modules. The root
+The `yunqi.zhibei:steward-bom:0.1.0` BOM manages all 39 published JAR modules. The root
 parent POM and BOM are also published. `steward-example-observation-e2e` and `steward-benchmark-observation` compile
 in the reactor but set `maven.deploy.skip=true` and are not consumer artifacts.
 
@@ -50,8 +50,9 @@ release-operator responsibilities and cannot be proven by this source checkout.
 
 ## Docker Verification
 
-The release gate runs the full reactor and then requires all three Redis Testcontainers tests with
-zero skips:
+The release gate runs the full reactor and then requires all eight Docker-backed test methods with
+zero skips. These cover the three Redis library clients, static and dynamic Spring/Jedis
+integration, and the real Nacos 3 configuration-source path:
 
 ```bash
 mvn --batch-mode --no-transfer-progress clean verify

@@ -21,8 +21,8 @@ public final class VerifyStagedRelease {
         Path repository = Path.of(arguments[1]).toAbsolutePath().normalize()
                 .resolve("yunqi/zhibei");
         Set<String> artifacts = bomArtifacts(project.resolve("bom/pom.xml"));
-        if (artifacts.size() != 35) {
-            throw new IllegalStateException("expected 35 BOM artifacts, found " + artifacts.size());
+        if (artifacts.size() != 39) {
+            throw new IllegalStateException("expected 39 BOM artifacts, found " + artifacts.size());
         }
         for (String artifact : artifacts) {
             requireArtifact(repository, artifact);
@@ -33,7 +33,7 @@ public final class VerifyStagedRelease {
                 "steward-bom/0.1.0/steward-bom-0.1.0.pom"));
         requireAbsent(repository.resolve("steward-example-observation-e2e"));
         requireAbsent(repository.resolve("steward-benchmark-observation"));
-        System.out.println("Exact BOM artifact set verified: 35 published JAR modules");
+        System.out.println("Exact BOM artifact set verified: 39 published JAR modules");
     }
 
     private static Set<String> bomArtifacts(Path pom) throws Exception {

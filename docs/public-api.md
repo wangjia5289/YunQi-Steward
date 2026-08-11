@@ -43,13 +43,59 @@ SDK exposes them.
 
 ## Optional Observation Adapters
 
-`MicrometerLifecycleMetrics` and its idempotent `Registration` are the public metric bridge.
+`MicrometerLifecycleMetrics` and its idempotent `Registration` are the public lifecycle metric
+bridge. `MicrometerConfigurationSourceMetrics` is the independent source-health bridge; it exposes
+only bounded state, revision, failure, recovery, and failure-stage meters.
 `JfrLifecycleAdapter`, `OpenTelemetryLifecycleAdapter`, and `Slf4jLifecycleAdapter` are final,
 caller-owned asynchronous consumers implementing `LifecycleEventDelivery`. Adapter-specific
 counter aliases remain public convenience diagnostics. No adapter class is an extension base, and
 no adapter implementation type enters a lifecycle owner or binding signature.
 
-## Steward Refresh
+## Framework Clients
+
+| Type | Audience | Contract decision |
+| --- | --- | --- |
+| `Jedis7SpringFactoryBean` | Plain Spring Framework 6 applications using Jedis 7 | Final Spring-owned factory exposing the native `JedisPooled` singleton |
+| `Jedis7ManagedResourceFactoryBean` | Plain Spring Framework 6 applications requiring same-type Jedis 7 replacement | Final Spring-owned factory exposing `ManagedResource<JedisPooled, Jedis7Configuration>` |
+
+The factory requires one complete `Jedis7Configuration`. `afterPropertiesSet()` creates and checks
+the client through `Jedis7Binding`; `destroy()` idempotently closes the owned `BoundResource`.
+`getObject()` is valid only between successful initialization and destruction. The module exposes
+Spring's standard `FactoryBean`, `InitializingBean`, and `DisposableBean` contracts, but no Spring
+Boot auto-configuration, project-owned Redis command API, or protected extension point.
+
+The dynamic factory requires a caller-owned `ConfigurationSource<Jedis7Configuration>` and owns
+only the resulting `ManagedResource`. Its one-argument constructor selects the no-op event buffer
+and a 30-second close wait; the additive three-argument constructor accepts a caller-owned
+`LifecycleEventBuffer` and positive close wait duration. The factory never closes that buffer.
+Spring destruction stops refresh work and retires every Jedis generation; source closure remains the
+responsibility of the source bean. Dynamic consumers inject
+the managed resource and call `execute(...)`, `executeAsync(...)`, or acquire an explicit lease.
+They never inject a `JedisPooled` reference which would become stale after replacement.
+
+## Configuration Management
+
+| Type | Audience | Contract decision |
+| --- | --- | --- |
+| `ConfigurationSource<C>` and `Subscription` | Configuration-source implementations | Minimal pull-snapshot and change-signal SPI |
+| `ConfigurationSourceStatus` | Applications and observability adapters | Secret-free state, revision, failure-stage, and monotonic failure/recovery counters |
+| `ConfigurationSnapshot<C>` | Configuration-source implementations | Complete typed configuration with source-local monotonic revision |
+| `MutableConfigurationSource<C>` | Tests and programmatic applications | Concrete in-memory source, not a base class |
+
+These types are published by `steward-control-configuration-management-core` under
+`yunqi.zhibei.steward.control.configuration`. They do not depend on the resource replacement
+engine, so startup-only monitoring and future configuration adapters share the same contract.
+
+`PropertiesFileConfigurationSource<C>` is an optional source adapter in
+`steward-control-configuration-management-file-properties`. It reads and watches one Java
+`.properties` file, invokes an application-owned `Loader<C>`, and publishes complete typed
+snapshots. It does not parse YAML, bind Spring Boot properties, or resolve secrets on its own.
+Its status reports `AVAILABLE`, `UNAVAILABLE`, or `CLOSED` and never includes a path, raw content,
+typed configuration, throwable, or exception message. The Nacos 3 source follows the same status
+contract. `steward-configuration-source-testkit` contains the reusable source contract checks for
+binding authors.
+
+## Resource Refresh
 
 | Type | Audience | Contract decision |
 | --- | --- | --- |
@@ -58,9 +104,6 @@ no adapter implementation type enters a lifecycle owner or binding signature.
 | `ManagedResource.Lease<T>` and `ResourceOperation<T,R,E>` | Applications | Stable scoped access without exposing a native reference directly |
 | `ManagedResourceStatus` and `Lifecycle` | Applications and observability adapters | Engine-created, secret-free control-plane snapshot |
 | `FailureSnapshot` and `Stage` | Applications and observability adapters | Engine-created redacted failure value; no public constructor |
-| `ConfigurationSource<C>` and `Subscription` | Configuration-source adapters | Minimal pull-snapshot and change-signal SPI |
-| `ConfigurationSnapshot<C>` | Configuration-source adapters | Complete typed configuration with source-local monotonic revision |
-| `MutableConfigurationSource<C>` | Tests and programmatic applications | Concrete in-memory source, not a base class |
 
 The Builder may override only the health probe, close wait timeout, and caller-owned lifecycle event
 buffer. Creation and closure always

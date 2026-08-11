@@ -16,7 +16,7 @@ the same run on the same host.
 | Run | 3 x 500 ms warmup, 5 x 500 ms measurement, 2 forks, GC profiler |
 
 The checked-in raw result is
-[`steward-benchmark-observation/results/apple-m4-temurin-21.0.10.json`](../steward-benchmark-observation/results/apple-m4-temurin-21.0.10.json).
+[`apple-m4-temurin-21.0.10.json`](../../benchmarks/observation/results/apple-m4-temurin-21.0.10.json).
 
 ## Reproduction
 
@@ -29,10 +29,10 @@ mvn -pl steward-benchmark-observation -am package
 Run the canonical baseline from the repository root:
 
 ```bash
-java -jar steward-benchmark-observation/target/steward-benchmark-observation.jar \
+java -jar benchmarks/observation/target/steward-benchmark-observation.jar \
   -wi 3 -i 5 -w 500ms -r 500ms -f 2 -prof gc \
   -rf json \
-  -rff steward-benchmark-observation/results/apple-m4-temurin-21.0.10.json
+  -rff benchmarks/observation/results/apple-m4-temurin-21.0.10.json
 ```
 
 The business-path benchmark forks include `-XX:-DoEscapeAnalysis`. This keeps the pre-existing
@@ -60,7 +60,7 @@ separately and never replaces the disabled business-path pairs.
 
 The checked-in Phase 13 characterization used two 300 ms warmups, three 300 ms measurements, and
 one fork. Raw JSON is
-[`apple-m4-temurin-21.0.10-fanout.json`](../steward-benchmark-observation/results/apple-m4-temurin-21.0.10-fanout.json).
+[`apple-m4-temurin-21.0.10-fanout.json`](../../benchmarks/observation/results/apple-m4-temurin-21.0.10-fanout.json).
 
 | Distributor batch | 1 branch | 2 branches | 4 branches |
 | ---: | ---: | ---: | ---: |
@@ -111,8 +111,8 @@ Buffer reference costs:
 Inspect the compiled business methods with:
 
 ```bash
-javap -classpath steward-refresh/target/classes -c -p \
-  yunqi.zhibei.steward.refresh.ManagedResource \
+javap -classpath yunqi-steward-control-plane/resource-management/refresh/target/classes -c -p \
+  yunqi.zhibei.steward.control.resource.refresh.ManagedResource \
   | rg -n -A45 -B3 'execute\(|executeAsync\(|acquire\('
 ```
 
