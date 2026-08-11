@@ -34,6 +34,59 @@ The script accepts only a staging directory below this checkout's `target` direc
 non-empty destination, runs the complete `release-staging` deploy lifecycle, and verifies the exact
 artifact inventory. This is a local repository staging gate, not publication to Maven Central.
 
+## Private Maven Publication
+
+Published artifacts use the shared private GitHub Packages repository
+`wangjia5289/YunQi-Maven-Packages`. The repository is deliberately separate from this public
+source repository because GitHub's Maven registry is repository-scoped and inherits the target
+repository's visibility. Future YunQi frameworks reuse this same artifact repository; their Maven
+coordinates, rather than separate package repositories, distinguish the products.
+
+The root POM declares the distribution endpoint:
+
+```text
+https://maven.pkg.github.com/wangjia5289/YunQi-Maven-Packages
+```
+
+Create `YunQi-Maven-Packages` as a private repository before the first publication. The publishing
+workflow in [`.github/workflows/publish-github-packages.yml`](../.github/workflows/publish-github-packages.yml)
+must receive these repository secrets:
+
+- `PACKAGES_USERNAME`: GitHub account that owns the package token.
+- `PACKAGES_TOKEN`: classic GitHub PAT with `repo`, `read:packages`, and `write:packages` scopes.
+
+The token is used only by Maven authentication to the package repository. The workflow's separate
+`GITHUB_TOKEN` is limited to creating the source-repository tag and GitHub Release. The workflow is
+manually dispatched from the default branch with version `0.1.0`; it runs local staging first,
+publishes the complete reactor, downloads the BOM and a core artifact through an isolated Maven
+repository, and creates the annotated tag only after that smoke test passes.
+
+Consumers need a matching `github` server in `settings.xml` and the package repository in their
+POM or repository settings. A consumer token needs only `read:packages`; no token is committed to
+the project or passed as a Maven command-line argument. A minimal consumer setup is:
+
+```xml
+<!-- ~/.m2/settings.xml -->
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_PACKAGES_USERNAME}</username>
+      <password>${env.GITHUB_PACKAGES_TOKEN}</password>
+    </server>
+  </servers>
+</settings>
+```
+
+```xml
+<repositories>
+  <repository>
+    <id>github</id>
+    <url>https://maven.pkg.github.com/wangjia5289/YunQi-Maven-Packages</url>
+  </repository>
+</repositories>
+```
+
 ## Binary Baseline
 
 The first `0.1.0` build has no older published artifact and therefore allows japicmp's missing-old-
